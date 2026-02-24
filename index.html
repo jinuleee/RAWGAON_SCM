@@ -9,10 +9,8 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap"
         rel="stylesheet">
-    <!-- MSAL SDK v3 (Using jsdelivr for reliable loading on GitHub Pages) -->
-    <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.13.0/lib/msal-browser.min.js"></script>
-    <!-- SheetJS for Excel Parsing -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 
@@ -21,20 +19,36 @@
     <!-- ── 로그인 화면 (Microsoft) ── -->
     <div id="loginScreen">
         <div class="login-box">
-            <div style="font-size: 11px; color: var(--gray-400); letter-spacing: 4px; font-weight: 700;">RAWGAON CORP.
-            </div>
-            <h1 class="login-title">SCM</h1>
-            <p style="font-size: 14px; color: var(--gray-500); margin-bottom: 48px; font-weight: 500;">Sales Channel
-                Management System</p>
+            <div
+                style="background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center;">
+                <h1 style="color: var(--primary); margin-bottom: 24px;">RAWGAON SCM</h1>
+                <p style="color: var(--gray-600); margin-bottom: 30px;">로그인하여 업무를 시작하세요</p>
 
-            <button onclick="login()" class="btn btn-primary"
-                style="padding: 16px 40px; font-size: 16px; width: 100%; justify-content: center; border-radius: 14px;">
-                Microsoft 계정으로 로그인
-            </button>
-            <button onclick="demoLogin()" class="btn btn-outline"
-                style="padding: 12px 40px; font-size: 14px; width: 100%; justify-content: center; border-radius: 14px; margin-top: 12px; border: 1px solid var(--gray-200); color: var(--gray-600);">
-                데모 계정으로 체험하기 (로그인 없이)
-            </button>
+                <div style="text-align: left; margin-bottom: 16px;">
+                    <label for="loginId"
+                        style="display: block; font-size: 14px; font-weight: 500; color: var(--gray-700); margin-bottom: 8px;">아이디</label>
+                    <input type="text" id="loginId"
+                        style="width: 100%; padding: 12px; border: 1px solid var(--gray-300); border-radius: 6px; box-sizing: border-box;"
+                        placeholder="아이디를 입력하세요">
+                </div>
+
+                <div style="text-align: left; margin-bottom: 24px;">
+                    <label for="loginPw"
+                        style="display: block; font-size: 14px; font-weight: 500; color: var(--gray-700); margin-bottom: 8px;">비밀번호</label>
+                    <input type="password" id="loginPw"
+                        style="width: 100%; padding: 12px; border: 1px solid var(--gray-300); border-radius: 6px; box-sizing: border-box;"
+                        placeholder="비밀번호를 입력하세요" onkeypress="if(event.key === 'Enter') loginWithCredentials()">
+                </div>
+
+                <button onclick="loginWithCredentials()"
+                    style="width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 16px; cursor: pointer; margin-bottom: 16px;">
+                    로그인
+                </button>
+                <button onclick="loginDemo()"
+                    style="width: 100%; padding: 12px; background: white; color: var(--gray-600); border: 1px solid var(--gray-300); border-radius: 6px; font-weight: bold; font-size: 14px; cursor: pointer;">
+                    데모 계정으로 체험하기
+                </button>
+            </div>
             <p style="margin-top: 20px; font-size: 12px; color: var(--gray-400); font-weight: 500;">
                 @rawgaon.com 관리자 계정만 접근 가능합니다.
             </p>

@@ -1,39 +1,69 @@
 // ── 설정 및 상수 ──
 const GAS_URL = "https://script.google.com/macros/s/AKfycbzMXh0amAwmWjK1ta2isjUMaApyT7P-ku8dW0GUn_uJuw4VYM2uEr3oNqccRjsc8YvQ6w/exec";
 
-// MSAL 인스턴스 (초기화 전 null)
-let msalInstance = null;
-let isMsalInitialized = false;
+// ==========================================
+// 1. 인증 및 환경 설정 (Authentication & Config)
+// ==========================================
 
-async function initializeMsal() {
-    if (msalInstance) return msalInstance;
+// --- 사용자 계정 설정 (관리자가 직접 수정하는 곳) ---
+// 아이디: { password: "비밀번호", name: "표시될 이름" }
+const VALID_USERS = {
+    "admin": { password: "1", name: "관리자" },
+    "sales1": { password: "1", name: "영업담당 1" },
+    "sales2": { password: "1", name: "영업담당 2" },
+    "demo": { password: "1", name: "데모 유저" }
+};
 
-    // 현재 리디렉션 URI 동적 결정 (file:// 은 Azure AD에서 지원하지 않음)
-    let redirectUri = window.location.href.split('?')[0].split('#')[0];
+let currentUser = null;
 
-    // 로컬 파일로 열었을 경우 경고 및 기본값 설정
-    if (window.location.protocol === 'file:') {
-        console.warn("MSAL does not support file:// protocols. Use a local server (e.g. npx serve).");
-        // 기본값 유지 (사용자가 Azure에 등록한 값 중 하나)
-        redirectUri = "https://jinuleee.github.io/RAWGAON_SCM/";
+async function loginWithCredentials() {
+    const idInput = document.getElementById('loginId').value.trim();
+    const pwInput = document.getElementById('loginPw').value;
+
+    if (!idInput || !pwInput) {
+        alert("아이디와 비밀번호를 모두 입력해주세요.");
+        return;
     }
 
-    const msalConfig = {
-        auth: {
-            clientId: "3e3ba818-204d-4779-b708-76e5ceef4386",
-            authority: "https://login.microsoftonline.com/f8661e8d-9200-42e2-8073-d2b47a5dee93",
-            redirectUri: redirectUri
-        },
-        cache: {
-            cacheLocation: "sessionStorage",
-            storeAuthStateInCookie: false
-        }
-    };
+    const user = VALID_USERS[idInput];
+    if (user && user.password === pwInput) {
+        // 로그인 성공
+        currentUser = {
+            username: idInput,
+            name: user.name
+        };
+        handleAuthSuccess(currentUser);
+    } else {
+        // 로그인 실패
+        alert("아이디 또는 비밀번호가 일치하지 않습니다.");
+    }
+}
 
-    msalInstance = new msal.PublicClientApplication(msalConfig);
-    await msalInstance.initialize();
-    isMsalInitialized = true;
-    return msalInstance;
+async function loginDemo() {
+    console.log("Starting Demo mode login...");
+    currentUser = {
+        username: "demo@rawgaon.com",
+        name: "데모 체험자"
+    };
+    handleAuthSuccess(currentUser);
+}
+
+function handleAuthSuccess(userObj) {
+    document.getElementById("loginScreen").style.display = "none";
+    document.querySelector(".user-name").textContent = userObj.name;
+    document.querySelector(".user-avatar").textContent = userObj.name.substring(0, 2).toUpperCase();
+
+    // 이전에 구현했던 화면 전환 로직 복원
+    showScreen('dashboard');
+    loadAllData();
+}
+
+function logout() {
+    currentUser = null;
+    document.getElementById('loginId').value = '';
+    document.getElementById('loginPw').value = '';
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'flex';
 }
 
 // ── 데이터 연동 (GAS) ──
@@ -514,41 +544,7 @@ function updateChannelBars(sales) {
 }
 
 // ── 인증 로직 ──
-async function login() {
-    try {
-        if (!isMsalInitialized) await initializeMsal();
-
-        const response = await msalInstance.loginPopup({ scopes: ["User.Read"] });
-        if (!response.account.username.endsWith("@rawgaon.com")) {
-            alert("@rawgaon.com 계정만 접근 가능합니다. 관리자에게 문의하세요.");
-            await msalInstance.logoutPopup();
-            return;
-        }
-        handleAuthSuccess(response.account);
-    } catch (error) {
-        console.error("로그인 실패:", error);
-        if (error.name === "BrowserConfigurationAuthError") {
-            alert("MSAL 설정 오류: 클라이언트 ID와 테넌트 ID가 올바른지 확인해주세요.");
-        }
-    }
-}
-
-function handleAuthSuccess(account) {
-    document.getElementById("loginScreen").style.display = "none";
-    document.querySelector(".user-name").textContent = account.name;
-    document.querySelector(".user-avatar").textContent = account.name.substring(0, 2).toUpperCase();
-    loadAllData();
-}
-
-// ── 데모 모드 (인증 없이 진입) ──
-function demoLogin() {
-    showToast("데모 계정으로 접속합니다...");
-    const demoAccount = {
-        name: "방문자 (Demo)",
-        username: "demo@rawgaon.com"
-    };
-    handleAuthSuccess(demoAccount);
-}
+// MSAL 관련 함수는 제거됨. loginWithCredentials 및 loginDemo 함수를 사용.
 
 function safeNum(val) {
     if (val === undefined || val === null) return 0;
@@ -819,15 +815,8 @@ document.getElementById('fileUpload')?.addEventListener('change', function (e) {
     };
     reader.readAsArrayBuffer(file);
 });
-
-window.addEventListener("load", async () => {
-    try {
-        await initializeMsal();
-        const accounts = msalInstance.getAllAccounts();
-        if (accounts.length > 0 && accounts[0].username.endsWith("@rawgaon.com")) {
-            handleAuthSuccess(accounts[0]);
-        }
-    } catch (error) {
-        console.error("MSAL 초기화 실패:", error);
-    }
+// 앱 초기화 로직
+window.addEventListener('load', async () => {
+    // 하드코딩된 로그인 시스템이므로 MSAL 초기화 불필요. 
+    // 기본적으로 #screen-login이 표시되도록 index.html에 세팅되어 있음.
 });
