@@ -98,6 +98,12 @@
             </div>
 
             <div style="display: flex; gap: 12px;">
+                <!-- 데이터 업로드 버튼 -->
+                <button class="btn btn-outline" onclick="document.getElementById('fileUpload').click()">
+                    <i class="fas fa-file-excel"></i> 데이터 로드
+                </button>
+                <input type="file" id="fileUpload" style="display: none;" accept=".xlsx,.xls,.csv" />
+
                 <!-- 상품등록 버튼 (우측 상단 공통 버튼 영역) -->
                 <button class="btn btn-primary" onclick="openProductAddModal()" id="btn-addProduct"
                     style="display: none;">
@@ -203,6 +209,65 @@
                                 <tr>
                                     <td colspan="7" style="text-align:center; padding: 40px; color: var(--gray-400);">
                                         매출 데이터를 불러오는 중...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HomeShopping PnL Screen -->
+            <div id="screen-pnl-homeshopping" class="screen" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">홈쇼핑 PnL (정산 현황)</div>
+                    </div>
+                    <div class="card-body" style="padding: 0;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>채널</th>
+                                    <th>매출액</th>
+                                    <th>원가</th>
+                                    <th>수수료</th>
+                                    <th>공헌이익</th>
+                                    <th>이익률</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pnlHomeshoppingBody">
+                                <tr>
+                                    <td colspan="6" style="text-align:center; padding: 40px; color: var(--gray-400);">
+                                        데이터를 불러오는 중...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- B2C PnL Screen -->
+            <div id="screen-pnl-b2c" class="screen" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">B2C PnL (정산 현황)</div>
+                    </div>
+                    <div class="card-body" style="padding: 0;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>채널</th>
+                                    <th>매출액</th>
+                                    <th>원가</th>
+                                    <th>수수료</th>
+                                    <th>물류비</th>
+                                    <th>공헌이익</th>
+                                    <th>이익률</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pnlB2cBody">
+                                <tr>
+                                    <td colspan="7" style="text-align:center; padding: 40px; color: var(--gray-400);">
+                                        데이터를 불러오는 중...</td>
                                 </tr>
                             </tbody>
                         </table>

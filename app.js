@@ -155,9 +155,18 @@ function handleAuthSuccess(userObj) {
             <span>매출 관리</span>
             <div class="badge" style="margin-left:auto;">24</div>
         </div>
-        <div class="nav-item" onclick="showScreen('profit', this)" id="menu-profit">
+        <div class="nav-item" onclick="toggleSubmenu('submenu-pnl', this)" id="menu-pnl-group">
             <div class="icon"><i class="fas fa-calculator"></i></div>
             <span>정산 현황</span>
+            <i class="fas fa-chevron-down" style="margin-left:auto; font-size:12px; transition: transform 0.2s;"></i>
+        </div>
+        <div class="submenu" id="submenu-pnl" style="display:none;">
+            <div class="nav-item sub-item" onclick="showScreen('pnl-homeshopping', this)" id="menu-pnl-hs">
+                홈쇼핑 PnL
+            </div>
+            <div class="nav-item sub-item" onclick="showScreen('pnl-b2c', this)" id="menu-pnl-b2c">
+                B2C PnL
+            </div>
         </div>
         
         <div class="nav-item" onclick="toggleSubmenu('submenu-inventory', this)" id="menu-inventory-group">
@@ -228,7 +237,8 @@ window.showScreen = function (screenId, menuItemElement = null) {
     if (pageTitle) {
         if (screenId === 'dashboard') pageTitle.textContent = '대시보드';
         else if (screenId === 'sales') pageTitle.textContent = '매출 관리';
-        else if (screenId === 'profit') pageTitle.textContent = '정산 현황';
+        else if (screenId === 'pnl-homeshopping') pageTitle.textContent = '홈쇼핑 PnL (정산 현황)';
+        else if (screenId === 'pnl-b2c') pageTitle.textContent = 'B2C PnL (정산 현황)';
         else if (screenId === 'inventory') pageTitle.textContent = '재고 현황';
         else if (screenId === 'stock') pageTitle.textContent = '재고 관리';
         else if (screenId === 'productMaster') pageTitle.textContent = '제품 마스터';
@@ -245,6 +255,10 @@ window.showScreen = function (screenId, menuItemElement = null) {
         if (btnProductAdd) btnProductAdd.style.display = 'inline-flex';
     } else if (screenId === 'adminScreen') {
         renderAdminUsers();
+    } else if (screenId === 'pnl-homeshopping') {
+        renderPnlHomeshoppingTable();
+    } else if (screenId === 'pnl-b2c') {
+        renderPnlB2cTable();
     }
 };
 
@@ -389,6 +403,11 @@ function renderSalesTable() {
     const container = document.getElementById('salesTableBody');
     if (!container) return;
 
+    if (!cachedData.sales || cachedData.sales.length === 0) {
+        container.innerHTML = `<tr><td colspan="10" style="text-align:center; padding: 40px; color: var(--gray-400);">업로드된 정산 내역이 없습니다. 시작하려면 우측 상단의 데이터 로드 버튼을 클릭하세요.</td></tr>`;
+        return;
+    }
+
     container.innerHTML = cachedData.sales.slice(0, 100).map(s => `
     <tr>
       <td>${s['팀'] || '-'}</td>
@@ -403,6 +422,59 @@ function renderSalesTable() {
       <td>${fmt(s['공헌이익률'])}%</td>
     </tr>
   `).join('');
+}
+
+window.renderPnlHomeshoppingTable = function () {
+    const container = document.getElementById('pnlHomeshoppingBody');
+    if (!container) return;
+
+    let hsSales = cachedData.sales.filter(s => {
+        let ch = String(s['판매채널'] || '').trim();
+        return ch === 'SK스토아' || ch.includes('홈쇼핑') || ch.includes('GS') || ch.includes('CJ') || ch.includes('롯데');
+    });
+
+    if (hsSales.length === 0) {
+        container.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color: var(--gray-400);">데이터 업로드를 통해 홈쇼핑 판매기록을 가져오세요.</td></tr>`;
+        return;
+    }
+
+    container.innerHTML = hsSales.slice(0, 100).map(s => `
+        <tr>
+          <td><span class="tag" style="background: var(--gray-100); color: var(--gray-700);">${s['판매채널'] || '-'}</span></td>
+          <td>${fmt(s['총판매가'])}</td>
+          <td>${fmt(s['총원가'])}</td>
+          <td>${fmt(Number(s['총판매가']) - Number(s['실정산금액']))}</td>
+          <td><span style="color:var(--success); font-weight:600;">${fmt(s['공헌이익'])}</span></td>
+          <td>${fmt(s['공헌이익률'])}%</td>
+        </tr>
+    `).join('');
+}
+
+window.renderPnlB2cTable = function () {
+    const container = document.getElementById('pnlB2cBody');
+    if (!container) return;
+
+    let b2cSales = cachedData.sales.filter(s => {
+        let ch = String(s['판매채널'] || '').trim();
+        return ch === '네이버' || ch === '카카오' || ch === '쿠팡' || ch === '리씽크' || (!ch.includes('홈쇼핑') && ch !== 'SK스토아' && !ch.includes('GS') && !ch.includes('CJ') && !ch.includes('롯데'));
+    });
+
+    if (b2cSales.length === 0) {
+        container.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 40px; color: var(--gray-400);">데이터 업로드를 통해 B2C 판매기록을 가져오세요.</td></tr>`;
+        return;
+    }
+
+    container.innerHTML = b2cSales.slice(0, 100).map(s => `
+        <tr>
+          <td><span class="tag" style="background: var(--gray-100); color: var(--gray-700);">${s['판매채널'] || '-'}</span></td>
+          <td>${fmt(s['총판매가'])}</td>
+          <td>${fmt(s['총원가'])}</td>
+          <td>${fmt(Number(s['총판매가']) - Number(s['실정산금액']))}</td>
+          <td>${fmt(s['물류비'])}</td>
+          <td><span style="color:var(--success); font-weight:600;">${fmt(s['공헌이익'])}</span></td>
+          <td>${fmt(s['공헌이익률'])}%</td>
+        </tr>
+    `).join('');
 }
 
 function renderStockTable() {
