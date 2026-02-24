@@ -15,7 +15,7 @@ async function initializeMsal() {
     if (window.location.protocol === 'file:') {
         console.warn("MSAL does not support file:// protocols. Use a local server (e.g. npx serve).");
         // 기본값 유지 (사용자가 Azure에 등록한 값 중 하나)
-        redirectUri = "https://jinuleee.github.io/mini-sabangnet/";
+        redirectUri = "https://jinuleee.github.io/RAWGAON_SCM/";
     }
 
     const msalConfig = {
@@ -568,7 +568,7 @@ function normalizeKeys(obj) {
 }
 
 // ── P&L 자동 계산 및 정규화 엔진 (Javascript) ──
-function processRawSalesData(rawSales, productsMaster, mappingMaster) {
+function processRawSalesData(rawSales, productsMaster, mappingMaster, fileName = "") {
     // 상품 마스터 딕셔너리 구성 (SKU -> 원가)
     const cogsDict = {};
     if (productsMaster) {
@@ -586,7 +586,7 @@ function processRawSalesData(rawSales, productsMaster, mappingMaster) {
     if (mappingMaster) {
         mappingMaster.forEach(m => {
             let row = normalizeKeys(m);
-            const key = (row['채널명'] || '기타') + "_" + (row['채널상품코드'] || '');
+            const key = String(row['채널명'] || '기타').trim() + "_" + String(row['채널상품코드'] || '').trim();
             mapDict[key] = {
                 sku: row['자사SKU'] || '미매핑',
                 multiplier: safeNum(row['세트수량(1세트당SKU개수)'] || row['세트수량'] || 1)
@@ -601,18 +601,46 @@ function processRawSalesData(rawSales, productsMaster, mappingMaster) {
         // 빈 행 무시 (주문에 필수적인 키가 모두 없는 경우만 무시)
         if (!row['판매채널'] && !row['Channel'] && !row['구분'] && !row['주문번호'] && !row['단품코드'] && !row['방송일자'] && !row['자사SKU']) return;
 
-        let channel = row['판매채널'] || row['Channel'] || '기타';
+        let channel = String(row['판매채널'] || row['Channel'] || '기타').trim();
 
-        // SK스토아 자동 인식 (판매채널은 없지만 단품코드/방송일자가 있는 경우)
-        if (channel === '기타' && (row['단품코드'] || row['방송일자'] || row['상품명']?.includes('스토아'))) {
-            channel = 'SK스토아';
+        // 파일명 및 고유 컬럼명을 통한 채널 자동 인식 (동적 매핑 보강)
+        if (channel === '기타') {
+            if (fileName.includes('SK') || row['단품코드'] || row['방송일자'] || row['상품명']?.includes('스토아')) {
+                channel = 'SK스토아';
+            } else if (fileName.includes('카카오') || row['카카오주문번호'] || row['주문번호(카카오)']) {
+                channel = '카카오';
+            } else if (fileName.includes('네이버') || row['스마트스토어'] || row['가맹점']) {
+                channel = '네이버';
+            } else if (fileName.includes('쿠팡') || row['발주서번호'] || row['로켓그로스']) {
+                channel = '쿠팡';
+            } else if (fileName.includes('리씽크') || row['리씽크']) {
+                channel = '리씽크';
+            }
         }
 
         let orderNo = String(row['주문번호'] || row['주문일련번호'] || row['순번'] || `MOCK-${Math.floor(Math.random() * 100000)}`);
-        let channelItemCode = String(row['상품코드'] || row['단품코드'] || row['채널상품코드'] || '').trim();
+
+        // 플랫폼별 고유 상품코드 컬럼 우선순위 로직 보강
+        let channelItemCode = '';
+        if (row['옵션ID'] && channel === '카카오') channelItemCode = String(row['옵션ID']).trim();
+        else if (row['상품번호'] && channel === '네이버') channelItemCode = String(row['상품번호']).trim();
+        else if (row['등록상품명'] || row['옵션아이디']) channelItemCode = String(row['등록상품명'] || row['옵션아이디']).trim();
+        else channelItemCode = String(row['상품코드'] || row['단품코드'] || row['채널상품코드'] || '').trim();
 
         let mapKey = channel + "_" + channelItemCode;
         let mapped = mapDict[mapKey];
+
+        // 만약 일반적인 코드로 조회 실패시, row 안의 값 중 하나라도 mapping master에 역으로 존재하는지 폴백 탐색
+        if (!mapped && channel !== '기타') {
+            for (let k in row) {
+                let testVal = String(row[k]).trim();
+                let fallbackKey = channel + "_" + testVal;
+                if (mapDict[fallbackKey]) {
+                    mapped = mapDict[fallbackKey];
+                    break;
+                }
+            }
+        }
 
         // 자동 매핑 추론 및 일자별 실적 하드코딩된 자사SKU 처리
         if (row['자사SKU'] && row['자사SKU'] !== '미매핑') {
@@ -772,7 +800,7 @@ document.getElementById('fileUpload')?.addEventListener('change', function (e) {
                 console.log("Raw Sales basic parse count:", rawSales.length);
                 if (rawSales.length > 0) console.log("First row sample:", rawSales[0]);
 
-                cachedData.sales = processRawSalesData(rawSales, cachedData.products, cachedData.mapping);
+                cachedData.sales = processRawSalesData(rawSales, cachedData.products, cachedData.mapping, file.name);
                 console.log("Processed Sales count:", cachedData.sales.length);
                 if (cachedData.sales.length > 0) console.log("Processed first row sample:", cachedData.sales[0]);
             }
