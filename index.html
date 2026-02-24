@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로가온 SCM | 미니 사방넷</title>
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap"
+        rel="stylesheet">
+    <!-- MSAL SDK v3 (Using jsdelivr for reliable loading on GitHub Pages) -->
+    <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.13.0/lib/msal-browser.min.js"></script>
+    <!-- SheetJS for Excel Parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <!-- ── 로그인 화면 (Microsoft) ── -->
+    <div id="loginScreen">
+        <div class="login-box">
+            <div style="font-size: 11px; color: var(--gray-400); letter-spacing: 4px; font-weight: 700;">RAWGAON CORP.
+            </div>
+            <h1 class="login-title">SCM</h1>
+            <p style="font-size: 14px; color: var(--gray-500); margin-bottom: 48px; font-weight: 500;">Sales Channel
+                Management System</p>
+
+            <button onclick="login()" class="btn btn-primary"
+                style="padding: 16px 40px; font-size: 16px; width: 100%; justify-content: center; border-radius: 14px;">
+                Microsoft 계정으로 로그인
+            </button>
+            <button onclick="demoLogin()" class="btn btn-outline"
+                style="padding: 12px 40px; font-size: 14px; width: 100%; justify-content: center; border-radius: 14px; margin-top: 12px; border: 1px solid var(--gray-200); color: var(--gray-600);">
+                데모 계정으로 체험하기 (로그인 없이)
+            </button>
+            <p style="margin-top: 20px; font-size: 12px; color: var(--gray-400); font-weight: 500;">
+                @rawgaon.com 관리자 계정만 접근 가능합니다.
+            </p>
+        </div>
+    </div>
+
+    <!-- ── 사이드바 ── -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <div class="company">Rawgaon Corp.</div>
+            <div class="title">SCM</div>
+            <span class="badge">RAWGAON SCM v2.0</span>
+        </div>
+
+        <nav class="nav-section">
+            <div class="nav-label">주요 보기</div>
+            <div class="nav-item active" onclick="showScreen('dashboard', this)">
+                <span class="icon">🏠</span> 대시보드
+            </div>
+            <div class="nav-item" onclick="showScreen('sales', this)">
+                <span class="icon">📊</span> 매출 분석
+            </div>
+            <div class="nav-item has-submenu" onclick="toggleSubmenu(this)" style="display: flex; align-items: center;">
+                <span class="icon">📦</span> 제품 관리
+                <span class="dropdown-icon" style="margin-left:auto; font-size:10px;">▼</span>
+            </div>
+            <div class="submenu-container"
+                style="display: none; flex-direction: column; padding-left: 28px; background: rgba(0,0,0,0.02);">
+                <div class="nav-item sub-item" onclick="showScreen('stock', this)">
+                    재고 관리
+                </div>
+                <div class="nav-item sub-item" onclick="showScreen('productMaster', this)">
+                    제품 마스터
+                </div>
+            </div>
+        </nav>
+
+        <nav class="nav-section">
+            <div class="nav-label">설정 및 관리</div>
+            <div class="nav-item" onclick="showScreen('master', this)">
+                <span class="icon">⚙️</span> 시스템 설정
+            </div>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <div class="user-info">
+                <div class="user-avatar">RG</div>
+                <div>
+                    <div class="user-name">Loading...</div>
+                    <div class="user-role">Administrator</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ── 메인 영역 ── -->
+    <div class="main">
+        <header class="topbar">
+            <div>
+                <div class="page-title" id="pageTitle">대시보드</div>
+                <div class="page-subtitle" id="pageSubtitle">실시간 비즈니스 현황 요약</div>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <label for="fileUpload" class="btn btn-primary" style="margin: 0; cursor: pointer;">
+                    <span>📂</span> 엑셀 데이터 업로드
+                </label>
+                <input type="file" id="fileUpload" style="display: none;" accept=".xlsx, .xls, .csv" multiple>
+                <button class="btn btn-outline" onclick="loadAllData()">
+                    <span>🔄</span> 새로고침
+                </button>
+            </div>
+        </header>
+
+        <main class="content">
+            <!-- Dashboard Screen -->
+            <div id="screen-dashboard" class="screen active">
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-label">이달의 매출</div>
+                        <div class="kpi-value"><span id="kpi-sales">0</span><span class="kpi-unit">원</span></div>
+                        <div class="kpi-change" style="color: var(--success);">↑ 지난 기간 대비 12.5%</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">총 공헌이익</div>
+                        <div class="kpi-value"><span id="kpi-settlement">0</span><span class="kpi-unit">원</span></div>
+                        <div class="kpi-change" style="color: var(--success);" id="kpi-margin-ratio">정산 처리 완료</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">누적 주문 건수</div>
+                        <div class="kpi-value"><span id="kpi-orders">0</span><span class="kpi-unit">건</span></div>
+                        <div class="kpi-change" style="color: var(--warning);">대기 중: 4건</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">재고 부족 알림</div>
+                        <div class="kpi-value"><span id="kpi-lowstock">0</span><span class="kpi-unit">개</span></div>
+                        <div class="kpi-change" style="color: var(--danger);">위험 수준: 2개</div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">채널별 매출 비중</div>
+                        </div>
+                        <div class="card-body">
+                            <div id="channelBars" class="channel-bars">
+                                <div style="text-align:center; padding: 40px; color: var(--gray-400);">데이터를 불러오는 중...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">재고 현황 요약</div>
+                        </div>
+                        <div class="card-body" style="padding: 0;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>SKU</th>
+                                        <th>제품명</th>
+                                        <th>재고</th>
+                                        <th>상태</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="stockSummary">
+                                    <tr>
+                                        <td colspan="4"
+                                            style="text-align:center; padding: 40px; color: var(--gray-400);">데이터가 없습니다
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sales Screen -->
+            <div id="screen-sales" class="screen" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">최근 거래 내역</div>
+                    </div>
+                    <div class="card-body" style="padding: 0;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>팀</th>
+                                    <th>채널</th>
+                                    <th>매출(차감전)</th>
+                                    <th>매출(차감후)</th>
+                                    <th>쿠폰비</th>
+                                    <th>원가</th>
+                                    <th>물류비</th>
+                                    <th>판관비</th>
+                                    <th>공헌이익</th>
+                                    <th>공헌이익률</th>
+                                </tr>
+                            </thead>
+                            <tbody id="salesTableBody">
+                                <tr>
+                                    <td colspan="7" style="text-align:center; padding: 40px; color: var(--gray-400);">
+                                        매출 데이터를 불러오는 중...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inventory / Stock Screen -->
+            <div id="screen-stock" class="screen" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">품목별 재고 현황</div>
+                    </div>
+                    <div class="card-body" style="padding: 0;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>유통전문판매원</th>
+                                    <th>창고명</th>
+                                    <th>보관유형</th>
+                                    <th>분류</th>
+                                    <th>상품코드</th>
+                                    <th>상품명</th>
+                                    <th>단위</th>
+                                    <th>입고</th>
+                                    <th>출고</th>
+                                    <th>현 재고</th>
+                                    <th>유통기한</th>
+                                    <th>비고</th>
+                                    <th>단가</th>
+                                    <th>재고금액(VAT별도)</th>
+                                    <th>입고금액(VAT별도)</th>
+                                    <th>출고금액(VAT별도)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventoryTableBody">
+                                <tr>
+                                    <td colspan="16" style="text-align:center; padding: 40px; color: var(--gray-400);">
+                                        제품 마스터 데이터를 불러오는 중...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Master Screen -->
+            <div id="screen-productMaster" class="screen" style="display: none;">
+                <div class="card">
+                    <div class="card-header"
+                        style="display: flex; justify-content: flex-start; align-items: center; gap: 16px;">
+                        <div class="card-title">전체 품목 마스터</div>
+                        <button class="btn btn-primary" onclick="openProductAddModal()">제품 정보 입력</button>
+                    </div>
+                    <div class="card-body" style="padding: 0; overflow-x: auto;">
+                        <table class="data-table" style="min-width: 2500px;">
+                            <thead>
+                                <tr>
+                                    <th>상품코드</th>
+                                    <th>제품명</th>
+                                    <th>카테고리</th>
+                                    <th>매입원가</th>
+                                    <th>물류사</th>
+                                    <th>브랜드</th>
+                                    <th>출시일</th>
+                                    <th>중량</th>
+                                    <th>보관온도</th>
+                                    <th>소비기한</th>
+                                    <th>식품유형</th>
+                                    <th>면/과세</th>
+                                    <th>품목바코드</th>
+                                    <th>제조원가</th>
+                                    <th>로얄티</th>
+                                    <th>상품원가</th>
+                                    <th>유통전문판매원</th>
+                                    <th>제조사</th>
+                                    <th>물류지</th>
+                                    <th>발주리드타임</th>
+                                    <th>입수</th>
+                                    <th>적재수/1PLT</th>
+                                    <th>제품규격_가로</th>
+                                    <th>제품규격_세로</th>
+                                    <th>제품규격_높이</th>
+                                    <th>MOQ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productMasterTableBody">
+                                <tr>
+                                    <td colspan="26" style="text-align:center; padding: 40px; color: var(--gray-400);">
+                                        제품 마스터 데이터를 불러오는 중...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Master Data Screen -->
+            <div id="screen-master" class="screen" style="display: none;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">시스템 링크</div>
+                        </div>
+                        <div class="card-body">
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                <button class="btn btn-outline" style="width: 100%;"
+                                    onclick="window.open('https://docs.google.com/spreadsheets/d/your-sheet-id')">📂
+                                    구글 시트 데이터베이스</button>
+                                <button class="btn btn-outline" style="width: 100%;"
+                                    onclick="window.open('https://rawgaoncorp1.sharepoint.com/sites/RAWGAONSCM')">💼
+                                    사내 SharePoint</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">시스템 정보</div>
+                        </div>
+                        <div class="card-body">
+                            <p style="font-size: 14px; color: var(--gray-500); line-height: 1.6;">
+                                RAWGAON SCM v2.0은 Google Apps Script와 Microsoft Azure AD를 기반으로 작동합니다.
+                                데이터는 30분마다 트리거를 통해 자동으로 업데이트됩니다.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Product Detail Modal -->
+    <div id="productDetailModal" class="modal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div class="modal-content"
+            style="background: white; padding: 24px; border-radius: 8px; width: 80%; max-width: 800px; max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <h2 style="margin: 0; color: var(--gray-900);">품목 상세 정보</h2>
+                    <button class="btn btn-outline" style="padding: 6px 16px; font-size: 13px;"
+                        onclick="editProductDetail()">수정</button>
+                </div>
+                <button onclick="closeProductModal()"
+                    style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--gray-500);">&times;</button>
+            </div>
+            <div id="productDetailContent" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                <!-- Content injected here -->
+            </div>
+        </div>
+    </div>
+
+    <div id="toast"
+        style="position: fixed; bottom: 32px; right: 32px; background: var(--gray-900); color: white; padding: 12px 24px; border-radius: 12px; font-size: 14px; font-weight: 600; box-shadow: var(--shadow-lg); opacity: 0; transform: translateY(20px); transition: all 0.3s; z-index: 1000;">
+    </div>
+
+    <!-- Product Add Modal -->
+    <div id="productAddModal" class="modal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div class="modal-content"
+            style="background: white; padding: 24px; border-radius: 8px; width: 80%; max-width: 800px; max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 id="productFormTitle" style="margin: 0; color: var(--gray-900);">제품 정보 입력</h2>
+                <button type="button" onclick="closeProductAddModal()"
+                    style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--gray-500);">&times;</button>
+            </div>
+            <form id="productAddForm" onsubmit="saveProduct(event)"
+                style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                <div><label
+                        style="display:block; font-size:12px; color:var(--gray-500); margin-bottom:4px;">상품코드</label><input
+                        type="text" name="상품코드" required
+                        style="width:100%; padding:8px; border:1px solid var(--gray-200); border-radius:6px; box-sizing: border-box;">
+                </div>
+                <div><label
+                        style="display:block; font-size:12px; color:var(--gray-500); margin-bottom:4px;">제품명</label><input
+                        type="text" name="제품명" required
+                        style="width:100%; padding:8px; border:1px solid var(--gray-200); border-radius:6px; box-sizing: border-box;">
+                </div>
+                <div><label
+                        style="display:block; font-size:12px; color:var(--gray-500); margin-bottom:4px;">카테고리</label><input
+                        type="text" name="카테고리"
+                        style="width:100%; padding:8px; border:1px solid var(--gray-200); border-radius:6px; box-sizing: border-box;">
+                </div>
+                <div><label
+                        style="display:block; font-size:12px; color:var(--gray-500); margin-bottom:4px;">매입원가</label><input
+                        type="number" name="매입원가"
+                        style="width:100%; padding:8px; border:1px solid var(--gray-200); border-radius:6px; box-sizing: border-box;">
+                </div>
+                <div><label
+                        style="display:block; font-size:12px; color:var(--gray-500); margin-bottom:4px;">물류사</label><input
+                        type="text" name="물류사"
+                        style="width:100%; padding:8px; border:1px solid var(--gray-200); border-radius:6px; box-sizing: border-box;">
+                </div>
+                <div><label
+                        style="display:block; font-size:12px; color:var(--gray-500); margin-bottom:4px;">브랜드</label><input
+                        type="text" name="브랜드"
+                        style="width:100%; padding:8px; border:1px solid var(--gray-200); border-radius:6px; box-sizing: border-box;">
+                </div>
+                <div><label
+                        style="display:block; font-size:12px; color:var(--gray-500); margin-bottom:4px;">출시일</label><input
+                        type="text" name="출시일"
+                        style="width:100%; padding:8px; border:1px solid var(--gray-200); border-radius:6px; box-sizing: border-box;">
+                </div>
+                <div><label
+                        style="display:block; font-size:12px; color:var(--gray-500); margin-bottom:4px;">중량</label><input
+                        type="text" name="중량"
+                        style="width:100%; padding:8px; border:1px solid var(--gray-200); border-radius:6px; box-sizing: border-box;">
+                </div>
+                <div><label
+                        style="display:block; font-size:12px; color:var(--gray-500); margin-bottom:4px;">보관온도</label><input
+                        type="text" name="보관온도"
+                        style="width:100%; padding:8px; border:1px solid var(--gray-200); border-radius:6px; box-sizing: border-box;">
+                </div>
+                <div><label
+                        style="display:block; font-size:12px; color:var(--gray-500); margin-bottom:4px;">소비기한</label><input
+                        type="text" name="소비기한"
+                        style="width:100%; padding:8px; border:1px solid var(--gray-200); border-radius:6px; box-sizing: border-box;">
+                </div>
+                <div><label
+                        style="display:block; font-size:12px; color:var(--gray-500); margin-bottom:4px;">식품유형</label><input
+                        type="text" name="식품유형"
+                        style="width:100%; padding:8px; border:1px solid var(--gray-200); border-radius:6px; box-sizing: border-box;">
+                </div>
+                <div><label
+                        style="display:block; font-size:12px; color:var(--gray-500); margin-bottom:4px;">면/과세</label><input
+                        type="text" name="면/과세"
+                        style="width:100%; padding:8px; border:1px solid var(--gray-200); border-radius:6px; box-sizing: border-box;">
+                </div>
+                <div><label
+                        style="display:block; font-size:12px; color:var(--gray-500); margin-bottom:4px;">품목바코드</label><input
+                        type="text" name="품목바코드"
+                        style="width:100%; padding:8px; border:1px solid var(--gray-200); border-radius:6px; box-sizing: border-box;">
+                </div>
+                <div><label
+                        style="display:block; font-size:12px; color:var(--gray-500); margin-bottom:4px;">제조원가</label><input
+                        type="number" name="제조원가"
+                        style="width:100%; padding:8px; border:1px solid var(--gray-200); border-radius:6px; box-sizing: border-box;">
+                </div>
+                <div><label
+                        style="display:block; font-size:12px; color:var(--gray-500); margin-bottom:4px;">로얄티</label><input
+                        type="number" name="로얄티"
+                        style="width:100%; padding:8px; border:1px solid var(--gray-200); border-radius:6px; box-sizing: border-box;">
+                </div>
+                <div><label
+                        style="display:block; font-size:12px; color:var(--gray-500); margin-bottom:4px;">상품원가</label><input
+                        type="number" name="상품원가"
+                        style="width:100%; padding:8px; border:1px solid var(--gray-200); border-radius:6px; box-sizing: border-box;">
+                </div>
+                <div><label
+                        style="display:block; font-size:12px; color:var(--gray-500); margin-bottom:4px;">유통전문판매원</label><input
+                        type="text" name="유통전문판매원"
+                        style="width:100%; padding:8px; border:1px solid var(--gray-200); border-radius:6px; box-sizing: border-box;">
+                </div>
+                <div><label
+                        style="display:block; font-size:12px; color:var(--gray-500); margin-bottom:4px;">제조사</label><input
+                        type="text" name="제조사"
+                        style="width:100%; padding:8px; border:1px solid var(--gray-200); border-radius:6px; box-sizing: border-box;">
+                </div>
+                <div><label
+                        style="display:block; font-size:12px; color:var(--gray-500); margin-bottom:4px;">물류지</label><input
+                        type="text" name="물류지"
+                        style="width:100%; padding:8px; border:1px solid var(--gray-200); border-radius:6px; box-sizing: border-box;">
+                </div>
+                <div><label
+                        style="display:block; font-size:12px; color:var(--gray-500); margin-bottom:4px;">발주리드타임</label><input
+                        type="text" name="발주리드타임"
+                        style="width:100%; padding:8px; border:1px solid var(--gray-200); border-radius:6px; box-sizing: border-box;">
+                </div>
+                <div><label
+                        style="display:block; font-size:12px; color:var(--gray-500); margin-bottom:4px;">입수</label><input
+                        type="number" name="입수"
+                        style="width:100%; padding:8px; border:1px solid var(--gray-200); border-radius:6px; box-sizing: border-box;">
+                </div>
+                <div><label
+                        style="display:block; font-size:12px; color:var(--gray-500); margin-bottom:4px;">적재수/1PLT</label><input
+                        type="number" name="적재수"
+                        style="width:100%; padding:8px; border:1px solid var(--gray-200); border-radius:6px; box-sizing: border-box;">
+                </div>
+                <div><label
+                        style="display:block; font-size:12px; color:var(--gray-500); margin-bottom:4px;">제품규격_가로</label><input
+                        type="text" name="제품규격_가로"
+                        style="width:100%; padding:8px; border:1px solid var(--gray-200); border-radius:6px; box-sizing: border-box;">
+                </div>
+                <div><label
+                        style="display:block; font-size:12px; color:var(--gray-500); margin-bottom:4px;">제품규격_세로</label><input
+                        type="text" name="제품규격_세로"
+                        style="width:100%; padding:8px; border:1px solid var(--gray-200); border-radius:6px; box-sizing: border-box;">
+                </div>
+                <div><label
+                        style="display:block; font-size:12px; color:var(--gray-500); margin-bottom:4px;">제품규격_높이</label><input
+                        type="text" name="제품규격_높이"
+                        style="width:100%; padding:8px; border:1px solid var(--gray-200); border-radius:6px; box-sizing: border-box;">
+                </div>
+                <div><label
+                        style="display:block; font-size:12px; color:var(--gray-500); margin-bottom:4px;">MOQ</label><input
+                        type="number" name="MOQ"
+                        style="width:100%; padding:8px; border:1px solid var(--gray-200); border-radius:6px; box-sizing: border-box;">
+                </div>
+            </form>
+            <div style="margin-top: 24px; text-align: right;">
+                <button type="submit" form="productAddForm" class="btn btn-primary" style="padding: 12px 24px;">완료
+                    (저장)</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Screen Management
+        function showScreen(name, el) {
+            document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+            document.getElementById('screen-' + name).style.display = 'block';
+
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            el.classList.add('active');
+
+            const titles = {
+                dashboard: ['대시보드', '실시간 비즈니스 현황 요약'],
+                sales: ['매출 분석', '상세 거래 내역 및 실적 분석'],
+                stock: ['재고 관리', 'SKU별 재고 현황 및 안전 재고 알림'],
+                productMaster: ['제품 마스터', '전체 품목 마스터 데이터'],
+                master: ['시스템 설정', '데이터 소스 및 시스템 구성']
+            };
+
+            document.getElementById('pageTitle').textContent = titles[name][0];
+            document.getElementById('pageSubtitle').textContent = titles[name][1];
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.opacity = '1';
+            t.style.transform = 'translateY(0)';
+            setTimeout(() => {
+                t.style.opacity = '0';
+                t.style.transform = 'translateY(20px)';
+            }, 3000);
+        }
+
+        function toggleSubmenu(el) {
+            const submenu = el.nextElementSibling;
+            if (submenu.style.display === 'none') {
+                submenu.style.display = 'flex';
+                el.querySelector('.dropdown-icon').textContent = '▲';
+            } else {
+                submenu.style.display = 'none';
+                el.querySelector('.dropdown-icon').textContent = '▼';
+            }
+        }
+    </script>
+</body>
+
+</html>
+```

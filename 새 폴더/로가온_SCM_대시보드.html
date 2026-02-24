@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>로가온 SCM</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #1a56db;
+    --primary-light: #e8f0fe;
+    --primary-dark: #1240a8;
+    --secondary: #0ea5e9;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --dark: #0f172a;
+    --gray-900: #111827;
+    --gray-700: #374151;
+    --gray-500: #6b7280;
+    --gray-300: #d1d5db;
+    --gray-100: #f3f4f6;
+    --white: #ffffff;
+    --sidebar-width: 240px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans KR', 'Inter', sans-serif;
+    background: #f0f4f8;
+    color: var(--gray-900);
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ── 사이드바 ── */
+  .sidebar {
+    width: var(--sidebar-width);
+    background: var(--dark);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 100;
+  }
+
+  .sidebar-logo {
+    padding: 24px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .sidebar-logo .company {
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .sidebar-logo .title {
+    font-size: 18px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: -0.5px;
+  }
+
+  .sidebar-logo .badge {
+    display: inline-block;
+    margin-top: 6px;
+    background: var(--primary);
+    color: white;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+
+  .nav-section {
+    padding: 16px 12px 8px;
+  }
+
+  .nav-label {
+    font-size: 10px;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 0 8px;
+    margin-bottom: 6px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: rgba(255,255,255,0.55);
+    font-size: 14px;
+    font-weight: 400;
+    transition: all 0.15s;
+    margin-bottom: 2px;
+  }
+
+  .nav-item:hover { background: rgba(255,255,255,0.07); color: white; }
+  .nav-item.active { background: var(--primary); color: white; font-weight: 500; }
+
+  .nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+
+  .sidebar-bottom {
+    margin-top: auto;
+    padding: 16px 12px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.05);
+  }
+
+  .user-avatar {
+    width: 32px; height: 32px;
+    background: var(--primary);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .user-name { font-size: 13px; color: white; font-weight: 500; }
+  .user-role { font-size: 11px; color: rgba(255,255,255,0.4); }
+
+  /* ── 메인 콘텐츠 ── */
+  .main {
+    margin-left: var(--sidebar-width);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .topbar {
+    background: white;
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--gray-300);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .page-title { font-size: 20px; font-weight: 700; color: var(--gray-900); }
+  .page-subtitle { font-size: 13px; color: var(--gray-500); margin-top: 2px; }
+
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+
+  .btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+  }
+
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: var(--primary-dark); }
+  .btn-outline { background: white; color: var(--gray-700); border: 1px solid var(--gray-300); }
+  .btn-outline:hover { background: var(--gray-100); }
+
+  .content { padding: 28px 32px; flex: 1; }
+
+  /* ── KPI 카드 ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .kpi-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid var(--gray-300);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+
+  .kpi-card.blue::before { background: var(--primary); }
+  .kpi-card.green::before { background: var(--success); }
+  .kpi-card.yellow::before { background: var(--warning); }
+  .kpi-card.red::before { background: var(--danger); }
+
+  .kpi-label { font-size: 12px; color: var(--gray-500); font-weight: 500; margin-bottom: 8px; }
+  .kpi-value { font-size: 26px; font-weight: 700; color: var(--gray-900); letter-spacing: -0.5px; }
+  .kpi-unit { font-size: 13px; font-weight: 400; color: var(--gray-500); margin-left: 4px; }
+
+  .kpi-change {
+    margin-top: 8px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .kpi-change.up { color: var(--success); }
+  .kpi-change.down { color: var(--danger); }
+  .kpi-change.neutral { color: var(--gray-500); }
+
+  /* ── 차트 영역 ── */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .card {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid var(--gray-300);
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--gray-100);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-title { font-size: 14px; font-weight: 600; color: var(--gray-900); }
+  .card-body { padding: 20px; }
+
+  /* 채널 비중 바 차트 */
+  .channel-bars { display: flex; flex-direction: column; gap: 12px; }
+
+  .channel-bar-item { display: flex; align-items: center; gap: 12px; }
+  .channel-name { font-size: 13px; color: var(--gray-700); width: 70px; flex-shrink: 0; }
+  .bar-track { flex: 1; height: 8px; background: var(--gray-100); border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; transition: width 1s ease; }
+  .bar-value { font-size: 12px; font-weight: 600; color: var(--gray-700); width: 50px; text-align: right; }
+
+  /* 재고 현황 테이블 */
+  .stock-table { width: 100%; border-collapse: collapse; }
+  .stock-table th {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--gray-100);
+    background: var(--gray-100);
+  }
+
+  .stock-table td {
+    padding: 12px;
+    font-size: 13px;
+    color: var(--gray-700);
+    border-bottom: 1px solid var(--gray-100);
+  }
+
+  .stock-table tr:last-child td { border-bottom: none; }
+  .stock-table tr:hover td { background: #f8fafc; }
+
+  .status-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .status-badge.good { background: #dcfce7; color: #16a34a; }
+  .status-badge.warning { background: #fef9c3; color: #ca8a04; }
+  .status-badge.danger { background: #fee2e2; color: #dc2626; }
+
+  /* ── 탭 화면들 ── */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* 매출 조회 필터 */
+  .filter-bar {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid var(--gray-300);
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .filter-group { display: flex; flex-direction: column; gap: 4px; }
+  .filter-label { font-size: 11px; color: var(--gray-500); font-weight: 500; }
+
+  select, input[type="date"] {
+    padding: 8px 12px;
+    border: 1px solid var(--gray-300);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--gray-700);
+    background: white;
+    outline: none;
+    font-family: inherit;
+  }
+
+  select:focus, input:focus { border-color: var(--primary); }
+
+  /* 데이터 테이블 */
+  .data-table-wrap {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid var(--gray-300);
+    overflow: hidden;
+  }
+
+  .data-table { width: 100%; border-collapse: collapse; }
+  .data-table th {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gray-500);
+    padding: 12px 16px;
+    text-align: left;
+    background: var(--gray-100);
+    border-bottom: 1px solid var(--gray-300);
+  }
+
+  .data-table td {
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--gray-700);
+    border-bottom: 1px solid var(--gray-100);
+  }
+
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: #f8fafc; }
+
+  .channel-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .tag-sk { background: #fef3c7; color: #92400e; }
+  .tag-coupang { background: #fee2e2; color: #991b1b; }
+  .tag-naver { background: #dcfce7; color: #166534; }
+  .tag-kakao { background: #fef9c3; color: #713f12; }
+  .tag-rethink { background: #e0e7ff; color: #3730a3; }
+
+  /* 로딩 */
+  .loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px;
+    color: var(--gray-500);
+    font-size: 14px;
+    gap: 10px;
+  }
+
+  .spinner {
+    width: 20px; height: 20px;
+    border: 2px solid var(--gray-300);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* 설정 화면 */
+  .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .settings-card { background: white; border-radius: 12px; border: 1px solid var(--gray-300); padding: 20px; }
+  .settings-title { font-size: 15px; font-weight: 600; margin-bottom: 16px; color: var(--gray-900); }
+  .settings-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--gray-100); }
+  .settings-row:last-child { border-bottom: none; }
+  .settings-key { font-size: 13px; color: var(--gray-700); }
+  .settings-val { font-size: 13px; font-weight: 500; color: var(--gray-900); }
+
+  /* 반응형 */
+  @media (max-width: 1200px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .charts-grid { grid-template-columns: 1fr; }
+  }
+
+  /* 알림 토스트 */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--gray-900);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s;
+    z-index: 999;
+  }
+
+  .toast.show { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- ── 사이드바 ── -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="company">Rawgaon Corp.</div>
+    <div class="title">SCM</div>
+    <span class="badge">SCM v1.0</span>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">메인</div>
+    <div class="nav-item active" onclick="showScreen('dashboard', this)">
+      <span class="icon">🏠</span> 대시보드
+    </div>
+    <div class="nav-item" onclick="showScreen('sales', this)">
+      <span class="icon">💰</span> 매출 조회
+    </div>
+    <div class="nav-item" onclick="showScreen('stock', this)">
+      <span class="icon">📦</span> 재고 현황
+    </div>
+    <div class="nav-item" onclick="showScreen('profit', this)">
+      <span class="icon">📊</span> 손익 분석
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">관리</div>
+    <div class="nav-item" onclick="showScreen('input', this)">
+      <span class="icon">📥</span> 데이터 입력
+    </div>
+    <div class="nav-item" onclick="showScreen('master', this)">
+      <span class="icon">⚙️</span> 마스터 관리
+    </div>
+  </div>
+
+  <div class="sidebar-bottom">
+    <div class="user-info">
+      <div class="user-avatar">FL</div>
+      <div>
+        <div class="user-name">이선생</div>
+        <div class="user-role">영업팀</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ── 메인 ── -->
+<div class="main">
+
+  <!-- 상단바 -->
+  <div class="topbar">
+    <div>
+      <div class="page-title" id="pageTitle">대시보드</div>
+      <div class="page-subtitle" id="pageSubtitle">2026년 2월 기준 현황</div>
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-outline" onclick="loadData()">🔄 데이터 새로고침</button>
+      <button class="btn btn-primary" onclick="goToSharePoint()">📋 SharePoint 열기</button>
+    </div>
+  </div>
+
+  <!-- 콘텐츠 -->
+  <div class="content">
+
+    <!-- ══ 대시보드 ══ -->
+    <div id="screen-dashboard" class="screen active">
+      <div class="kpi-grid">
+        <div class="kpi-card blue">
+          <div class="kpi-label">이번 달 매출</div>
+          <div class="kpi-value" id="kpi-sales">-<span class="kpi-unit">원</span></div>
+          <div class="kpi-change neutral" id="kpi-sales-change">데이터 로딩 중...</div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-label">이번 달 정산금액</div>
+          <div class="kpi-value" id="kpi-settlement">-<span class="kpi-unit">원</span></div>
+          <div class="kpi-change neutral" id="kpi-settlement-change">데이터 로딩 중...</div>
+        </div>
+        <div class="kpi-card yellow">
+          <div class="kpi-label">총 판매 건수</div>
+          <div class="kpi-value" id="kpi-orders">-<span class="kpi-unit">건</span></div>
+          <div class="kpi-change neutral" id="kpi-orders-change">데이터 로딩 중...</div>
+        </div>
+        <div class="kpi-card red">
+          <div class="kpi-label">재고 부족 SKU</div>
+          <div class="kpi-value" id="kpi-lowstock">-<span class="kpi-unit">개</span></div>
+          <div class="kpi-change neutral">안전재고 이하 기준</div>
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">채널별 매출 비중</div>
+          </div>
+          <div class="card-body">
+            <div class="channel-bars" id="channelBars">
+              <div class="loading"><div class="spinner"></div> 데이터 로딩 중...</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">재고 현황 요약</div>
+          </div>
+          <div class="card-body" style="padding:0;">
+            <table class="stock-table">
+              <thead>
+                <tr>
+                  <th>SKU</th>
+                  <th>제품명</th>
+                  <th>현재고</th>
+                  <th>상태</th>
+                </tr>
+              </thead>
+              <tbody id="stockSummary">
+                <tr><td colspan="4"><div class="loading"><div class="spinner"></div> 로딩 중...</div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 매출 조회 ══ -->
+    <div id="screen-sales" class="screen">
+      <div class="filter-bar">
+        <div class="filter-group">
+          <div class="filter-label">시작일</div>
+          <input type="date" id="filterDateFrom" value="2026-01-01">
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">종료일</div>
+          <input type="date" id="filterDateTo" value="2026-02-28">
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">판매채널</div>
+          <select id="filterChannel">
+            <option value="">전체</option>
+            <option>SK스토아</option>
+            <option>쿠팡</option>
+            <option>네이버</option>
+            <option>카카오</option>
+            <option>리씽크</option>
+          </select>
+        </div>
+        <div style="margin-top:16px;">
+          <button class="btn btn-primary" onclick="loadSalesData()">🔍 조회</button>
+        </div>
+      </div>
+
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>주문번호</th>
+              <th>판매채널</th>
+              <th>주문일</th>
+              <th>자사SKU</th>
+              <th>판매수량</th>
+              <th>총판매가</th>
+              <th>실정산금액</th>
+              <th>공헌이익</th>
+            </tr>
+          </thead>
+          <tbody id="salesTableBody">
+            <tr><td colspan="8"><div class="loading"><div class="spinner"></div> 조회 버튼을 눌러주세요</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ 재고 현황 ══ -->
+    <div id="screen-stock" class="screen">
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>자사SKU</th>
+              <th>제품명</th>
+              <th>카테고리</th>
+              <th>기초재고</th>
+              <th>안전재고</th>
+              <th>매입원가</th>
+              <th>보관온도</th>
+              <th>상태</th>
+            </tr>
+          </thead>
+          <tbody id="stockTableBody">
+            <tr><td colspan="8"><div class="loading"><div class="spinner"></div> 로딩 중...</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ 손익 분석 ══ -->
+    <div id="screen-profit" class="screen">
+      <div class="kpi-grid">
+        <div class="kpi-card blue">
+          <div class="kpi-label">총 정산금액</div>
+          <div class="kpi-value" id="profit-settlement">-</div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-label">총 원가</div>
+          <div class="kpi-value" id="profit-cost">-</div>
+        </div>
+        <div class="kpi-card yellow">
+          <div class="kpi-label">총 공헌이익</div>
+          <div class="kpi-value" id="profit-margin">-</div>
+        </div>
+        <div class="kpi-card red">
+          <div class="kpi-label">공헌이익률</div>
+          <div class="kpi-value" id="profit-rate">-%</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">채널별 손익 분석</div>
+        </div>
+        <div class="card-body" style="padding:0;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>채널</th>
+                <th>판매건수</th>
+                <th>총판매가</th>
+                <th>정산금액</th>
+                <th>총원가</th>
+                <th>공헌이익</th>
+                <th>이익률</th>
+              </tr>
+            </thead>
+            <tbody id="profitTableBody">
+              <tr><td colspan="7"><div class="loading"><div class="spinner"></div> 로딩 중...</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 데이터 입력 ══ -->
+    <div id="screen-input" class="screen">
+      <div class="card" style="max-width:600px;">
+        <div class="card-header">
+          <div class="card-title">📥 판매데이터 입력 안내</div>
+        </div>
+        <div class="card-body">
+          <p style="font-size:14px; color:var(--gray-700); line-height:1.8; margin-bottom:20px;">
+            채널에서 받은 엑셀 파일을 <strong>SharePoint 판매데이터 List</strong>에 직접 붙여넣기 할 수 있어요.
+          </p>
+
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <button class="btn btn-primary" onclick="window.open('https://rawgaoncorp1.sharepoint.com/sites/RAWGAONSCM/Lists/판매데이터/AllItems.aspx')">
+              📋 판매데이터 List 열기
+            </button>
+            <button class="btn btn-outline" onclick="window.open('https://rawgaoncorp1.sharepoint.com/sites/RAWGAONSCM/Lists/입출고이력/AllItems.aspx')">
+              📦 입출고이력 List 열기
+            </button>
+            <button class="btn btn-outline" onclick="window.open('https://rawgaoncorp1.sharepoint.com/sites/RAWGAONSCM/Lists/제품마스터/AllItems.aspx')">
+              🗂️ 제품마스터 List 열기
+            </button>
+          </div>
+
+          <div style="margin-top:20px; padding:16px; background:var(--primary-light); border-radius:8px; font-size:13px; color:var(--primary-dark); line-height:1.7;">
+            💡 <strong>붙여넣기 방법:</strong><br>
+            List 열기 → 상단 "그리드 뷰에서 편집" 클릭 → 엑셀에서 복사 → 붙여넣기!
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 마스터 관리 ══ -->
+    <div id="screen-master" class="screen">
+      <div class="settings-grid">
+        <div class="settings-card">
+          <div class="settings-title">📋 SharePoint Lists 바로가기</div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <button class="btn btn-outline" onclick="window.open('https://rawgaoncorp1.sharepoint.com/sites/RAWGAONSCM/Lists/제품마스터/AllItems.aspx')">🗂️ 제품마스터</button>
+            <button class="btn btn-outline" onclick="window.open('https://rawgaoncorp1.sharepoint.com/sites/RAWGAONSCM/Lists/채널매핑/AllItems.aspx')">🔗 채널매핑</button>
+            <button class="btn btn-outline" onclick="window.open('https://rawgaoncorp1.sharepoint.com/sites/RAWGAONSCM/Lists/물류비용/AllItems.aspx')">💰 물류비용</button>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <div class="settings-title">⚙️ 시스템 정보</div>
+          <div class="settings-row">
+            <span class="settings-key">사이트</span>
+            <span class="settings-val">RAWGAONSCM</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-key">버전</span>
+            <span class="settings-val">v1.0 (2026.02)</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-key">채널 수</span>
+            <span class="settings-val">5개</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-key">팀원 수</span>
+            <span class="settings-val">6명</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── SharePoint 연결 설정 ──
+const SP_SITE = "https://rawgaoncorp1.sharepoint.com/sites/RAWGAONSCM";
+const HEADERS = { "Accept": "application/json;odata=verbose" };
+
+// ── 화면 전환 ──
+const pageTitles = {
+  dashboard: ['대시보드', '2026년 2월 기준 현황'],
+  sales: ['매출 조회', '채널별 판매 데이터'],
+  stock: ['재고 현황', 'SKU별 재고 및 안전재고'],
+  profit: ['손익 분석', '채널별 공헌이익 분석'],
+  input: ['데이터 입력', 'SharePoint List 직접 입력'],
+  master: ['마스터 관리', '제품/채널/물류 기준 정보'],
+};
+
+function showScreen(name, navEl) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  navEl.classList.add('active');
+  document.getElementById('pageTitle').textContent = pageTitles[name][0];
+  document.getElementById('pageSubtitle').textContent = pageTitles[name][1];
+
+  if (name === 'stock') loadStockTable();
+  if (name === 'profit') loadProfitData();
+}
+
+function goToSharePoint() {
+  window.open(SP_SITE, '_blank');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── 숫자 포맷 ──
+function fmt(num) {
+  if (!num) return '0';
+  return Math.round(num).toLocaleString('ko-KR');
+}
+
+// ── SharePoint REST API 호출 ──
+async function spFetch(listName, select = '', filter = '') {
+  let url = `${SP_SITE}/_api/web/lists/getbytitle('${encodeURIComponent(listName)}')/items?$top=500`;
+  if (select) url += `&$select=${select}`;
+  if (filter) url += `&$filter=${filter}`;
+  try {
+    const res = await fetch(url, { headers: HEADERS, credentials: 'include' });
+    if (!res.ok) throw new Error('API 오류');
+    const data = await res.json();
+    return data.d.results || [];
+  } catch (e) {
+    console.error(listName, e);
+    return [];
+  }
+}
+
+// ── 대시보드 데이터 로드 ──
+async function loadData() {
+  showToast('🔄 데이터 새로고침 중...');
+
+  const [salesData, productData] = await Promise.all([
+    spFetch('판매데이터', '판매채널,총판매가,실정산금액,총원가,판매수량,주문일'),
+    spFetch('제품마스터', 'Title,제품명,기초재고,안전재고,카테고리')
+  ]);
+
+  // KPI 계산
+  const totalSales = salesData.reduce((s, r) => s + (r['총판매가'] || 0), 0);
+  const totalSettlement = salesData.reduce((s, r) => s + (r['실정산금액'] || 0), 0);
+  const totalOrders = salesData.length;
+
+  document.getElementById('kpi-sales').innerHTML = `${fmt(totalSales)}<span class="kpi-unit">원</span>`;
+  document.getElementById('kpi-settlement').innerHTML = `${fmt(totalSettlement)}<span class="kpi-unit">원</span>`;
+  document.getElementById('kpi-orders').innerHTML = `${totalOrders}<span class="kpi-unit">건</span>`;
+  document.getElementById('kpi-sales-change').textContent = `총 ${salesData.length}건 판매`;
+  document.getElementById('kpi-settlement-change').textContent = `정산율 ${totalSales > 0 ? Math.round(totalSettlement/totalSales*100) : 0}%`;
+  document.getElementById('kpi-orders-change').textContent = `5개 채널 합계`;
+
+  // 채널별 비중
+  const channels = ['SK스토아','쿠팡','네이버','카카오','리씽크'];
+  const colors = ['#f59e0b','#ef4444','#10b981','#fbbf24','#6366f1'];
+  const channelSales = {};
+  channels.forEach(c => channelSales[c] = 0);
+  salesData.forEach(r => {
+    if (channelSales[r['판매채널']] !== undefined)
+      channelSales[r['판매채널']] += (r['총판매가'] || 0);
+  });
+
+  const maxVal = Math.max(...Object.values(channelSales), 1);
+  const barsHtml = channels.map((c, i) => {
+    const pct = Math.round(channelSales[c] / (totalSales || 1) * 100);
+    const width = Math.round(channelSales[c] / maxVal * 100);
+    return `
+      <div class="channel-bar-item">
+        <div class="channel-name">${c}</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${width}%;background:${colors[i]};"></div>
+        </div>
+        <div class="bar-value">${pct}%</div>
+      </div>`;
+  }).join('');
+  document.getElementById('channelBars').innerHTML = barsHtml || '<div style="color:var(--gray-500);font-size:13px;">판매 데이터가 없습니다.</div>';
+
+  // 재고 요약
+  const lowStockCount = productData.filter(p => (p['기초재고'] || 0) < (p['안전재고'] || 0)).length;
+  document.getElementById('kpi-lowstock').innerHTML = `${lowStockCount}<span class="kpi-unit">개</span>`;
+
+  const stockHtml = productData.map(p => {
+    const stock = p['기초재고'] || 0;
+    const safe = p['안전재고'] || 0;
+    const ratio = safe > 0 ? stock / safe : 1;
+    const status = ratio >= 2 ? '<span class="status-badge good">정상</span>'
+                 : ratio >= 1 ? '<span class="status-badge warning">주의</span>'
+                 : '<span class="status-badge danger">부족</span>';
+    return `<tr>
+      <td><strong>${p['Title']}</strong></td>
+      <td>${p['제품명'] || '-'}</td>
+      <td>${fmt(stock)}</td>
+      <td>${status}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--gray-500);">데이터 없음</td></tr>';
+
+  document.getElementById('stockSummary').innerHTML = stockHtml;
+  showToast('✅ 데이터 업데이트 완료!');
+}
+
+// ── 매출 조회 ──
+async function loadSalesData() {
+  document.getElementById('salesTableBody').innerHTML = '<tr><td colspan="8"><div class="loading"><div class="spinner"></div> 조회 중...</div></td></tr>';
+
+  const from = document.getElementById('filterDateFrom').value;
+  const to = document.getElementById('filterDateTo').value;
+  const ch = document.getElementById('filterChannel').value;
+
+  let filter = '';
+  if (from) filter += `주문일 ge datetime'${from}T00:00:00Z'`;
+  if (to) filter += (filter ? ' and ' : '') + `주문일 le datetime'${to}T23:59:59Z'`;
+  if (ch) filter += (filter ? ' and ' : '') + `판매채널 eq '${ch}'`;
+
+  const data = await spFetch('판매데이터', 'Title,판매채널,주문일,자사SKU,판매수량,총판매가,실정산금액,총원가', filter);
+
+  const tagMap = { 'SK스토아':'tag-sk', '쿠팡':'tag-coupang', '네이버':'tag-naver', '카카오':'tag-kakao', '리씽크':'tag-rethink' };
+
+  const html = data.map(r => {
+    const profit = (r['실정산금액'] || 0) - (r['총원가'] || 0);
+    const date = r['주문일'] ? r['주문일'].substring(0,10) : '-';
+    return `<tr>
+      <td>${r['Title'] || '-'}</td>
+      <td><span class="channel-tag ${tagMap[r['판매채널']] || ''}">${r['판매채널'] || '-'}</span></td>
+      <td>${date}</td>
+      <td>${r['자사SKU'] || '-'}</td>
+      <td>${fmt(r['판매수량'])}</td>
+      <td>${fmt(r['총판매가'])}원</td>
+      <td>${fmt(r['실정산금액'])}원</td>
+      <td style="color:${profit >= 0 ? 'var(--success)' : 'var(--danger)'}">${fmt(profit)}원</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--gray-500);">조회된 데이터가 없습니다.</td></tr>';
+
+  document.getElementById('salesTableBody').innerHTML = html;
+}
+
+// ── 재고 테이블 ──
+async function loadStockTable() {
+  const data = await spFetch('제품마스터', 'Title,제품명,카테고리,기초재고,안전재고,매입원가,보관온도');
+  const html = data.map(p => {
+    const stock = p['기초재고'] || 0;
+    const safe = p['안전재고'] || 0;
+    const ratio = safe > 0 ? stock / safe : 1;
+    const status = ratio >= 2 ? '<span class="status-badge good">정상</span>'
+                 : ratio >= 1 ? '<span class="status-badge warning">주의</span>'
+                 : '<span class="status-badge danger">부족</span>';
+    return `<tr>
+      <td><strong>${p['Title']}</strong></td>
+      <td>${p['제품명'] || '-'}</td>
+      <td>${p['카테고리'] || '-'}</td>
+      <td>${fmt(stock)}</td>
+      <td>${fmt(safe)}</td>
+      <td>${fmt(p['매입원가'])}원</td>
+      <td>${p['보관온도'] || '-'}</td>
+      <td>${status}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--gray-500);">데이터 없음</td></tr>';
+  document.getElementById('stockTableBody').innerHTML = html;
+}
+
+// ── 손익 분석 ──
+async function loadProfitData() {
+  const data = await spFetch('판매데이터', '판매채널,총판매가,실정산금액,총원가,판매수량');
+  const channels = ['SK스토아','쿠팡','네이버','카카오','리씽크'];
+  const stats = {};
+  channels.forEach(c => stats[c] = { count:0, sales:0, settlement:0, cost:0 });
+
+  data.forEach(r => {
+    const c = r['판매채널'];
+    if (stats[c]) {
+      stats[c].count++;
+      stats[c].sales += r['총판매가'] || 0;
+      stats[c].settlement += r['실정산금액'] || 0;
+      stats[c].cost += r['총원가'] || 0;
+    }
+  });
+
+  const totalSettlement = Object.values(stats).reduce((s, v) => s + v.settlement, 0);
+  const totalCost = Object.values(stats).reduce((s, v) => s + v.cost, 0);
+  const totalMargin = totalSettlement - totalCost;
+  const rate = totalSettlement > 0 ? Math.round(totalMargin / totalSettlement * 100) : 0;
+
+  document.getElementById('profit-settlement').innerHTML = `${fmt(totalSettlement)}<span class="kpi-unit">원</span>`;
+  document.getElementById('profit-cost').innerHTML = `${fmt(totalCost)}<span class="kpi-unit">원</span>`;
+  document.getElementById('profit-margin').innerHTML = `${fmt(totalMargin)}<span class="kpi-unit">원</span>`;
+  document.getElementById('profit-rate').textContent = `${rate}%`;
+
+  const tagMap = { 'SK스토아':'tag-sk', '쿠팡':'tag-coupang', '네이버':'tag-naver', '카카오':'tag-kakao', '리씽크':'tag-rethink' };
+  const html = channels.map(c => {
+    const s = stats[c];
+    const margin = s.settlement - s.cost;
+    const marginRate = s.settlement > 0 ? Math.round(margin / s.settlement * 100) : 0;
+    return `<tr>
+      <td><span class="channel-tag ${tagMap[c]}">${c}</span></td>
+      <td>${s.count}건</td>
+      <td>${fmt(s.sales)}원</td>
+      <td>${fmt(s.settlement)}원</td>
+      <td>${fmt(s.cost)}원</td>
+      <td style="color:${margin >= 0 ? 'var(--success)' : 'var(--danger)'};font-weight:600;">${fmt(margin)}원</td>
+      <td>${marginRate}%</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('profitTableBody').innerHTML = html;
+}
+
+// ── 초기 로드 ──
+loadData();
+</script>
+</body>
+</html>

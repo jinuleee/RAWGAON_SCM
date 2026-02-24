@@ -1,0 +1,16 @@
+# Temporary directories
+temp_doc1/
+temp_doc2/
+temp_xlsx/
+
+# Microsoft Office temporary files
+~$*.docx
+~$*.xlsx
+
+# PowerShell history or temp files
+*.ps1xml
+*.tmp
+
+# System files
+.DS_Store
+Thumbs.db
