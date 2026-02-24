@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>로가온 SCM | 미니 사방넷</title>
+    <title>RAWGAON SCM</title>
     <!-- Fonts -->
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap"
@@ -86,12 +86,25 @@
             </div>
         </nav>
 
-        <nav class="nav-section">
+        <div class="nav-section">
             <div class="nav-label">설정 및 관리</div>
             <div class="nav-item" onclick="showScreen('master', this)">
                 <span class="icon">⚙️</span> 시스템 설정
             </div>
-        </nav>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-label">Main Menu</div>
+            <div id="sidebar-menu">
+                <!-- Javascript will render menu items here based on login status -->
+            </div>
+
+            <div id="menu-admin" class="nav-item" onclick="showScreen('adminScreen')"
+                style="display: none; color: var(--danger); margin-top: 16px; border-top: 1px solid var(--gray-100); padding-top: 16px; border-radius: 0;">
+                <div class="icon"><i class="fas fa-users-cog"></i></div>
+                <span>계정 관리 (관리자)</span>
+            </div>
+        </div>
 
         <div class="sidebar-bottom">
             <div class="user-info">
@@ -105,20 +118,25 @@
     </aside>
 
     <!-- ── 메인 영역 ── -->
-    <div class="main">
+    <div class="main" id="app" style="display: none;">
         <header class="topbar">
             <div>
-                <div class="page-title" id="pageTitle">대시보드</div>
-                <div class="page-subtitle" id="pageSubtitle">실시간 비즈니스 현황 요약</div>
+                <h2 class="page-title" id="pageTitle">대시보드</h2>
+                <div class="page-subtitle" id="lastUpdated">마지막 업데이트: 연동 중...</div>
             </div>
-            <div style="display: flex; gap: 12px; align-items: center;">
-                <label for="fileUpload" class="btn btn-primary" style="margin: 0; cursor: pointer;">
-                    <span>📂</span> 엑셀 데이터 업로드
-                </label>
-                <input type="file" id="fileUpload" style="display: none;" accept=".xlsx, .xls, .csv" multiple>
-                <button class="btn btn-outline" onclick="loadAllData()">
-                    <span>🔄</span> 새로고침
+
+            <div style="display: flex; gap: 12px;">
+                <!-- 상품등록 버튼 (우측 상단 공통 버튼 영역) -->
+                <button class="btn btn-primary" onclick="openProductAddModal()" id="btn-addProduct"
+                    style="display: none;">
+                    <i class="fas fa-plus"></i> 제품 정보 입력
                 </button>
+                <div class="user-info" id="userProfile">
+                    <div class="user-avatar" style="background: var(--gray-200); color: var(--gray-500);">?</div>
+                    <div>
+                        <div class="user-name" style="color: var(--gray-500);">로그인 필요</div>
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -341,6 +359,70 @@
                     </div>
                 </div>
             </div>
+
+            <!-- 계정 관리 화면 (관리자 전용) -->
+            <div id="screen-adminScreen" class="screen content" style="display: none;">
+                <div class="card">
+                    <div class="card-header" style="background: var(--primary-light);">
+                        <h3 class="card-title" style="color: var(--primary-dark);"><i class="fas fa-user-shield"></i> 데모
+                            계정 발급 및 관리</h3>
+                    </div>
+                    <div class="card-body">
+                        <div
+                            style="background: #fff8e6; border-left: 4px solid var(--warning); padding: 16px; border-radius: 4px; margin-bottom: 24px;">
+                            <p style="margin: 0; font-size: 14px; color: #856404;">
+                                <i class="fas fa-exclamation-triangle"></i> <strong>안내:</strong> 이 SCM 시스템은 별도의 회원 서버를
+                                두지 않는 가벼운 시스템입니다.<br>
+                                여기서 계정을 추가/수정/삭제하는 내용은 등록하신 분의 <strong>현재 컴퓨터 브라우저</strong>에만 즉시 저장되며, 다른 직원의 통신 기기에는
+                                공유되지 않습니다. 테스트 및 데모 용도로 활용하세요.
+                            </p>
+                        </div>
+
+                        <div
+                            style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 12px; align-items: end; background: var(--gray-50); padding: 20px; border-radius: 12px; margin-bottom: 24px; border: 1px solid var(--gray-200);">
+                            <div>
+                                <label
+                                    style="display: block; font-size: 12px; font-weight: bold; color: var(--gray-600); margin-bottom: 6px;">새
+                                    아이디(영어/숫자)</label>
+                                <input type="text" id="newUserId" placeholder="예: user1"
+                                    style="width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 6px;">
+                            </div>
+                            <div>
+                                <label
+                                    style="display: block; font-size: 12px; font-weight: bold; color: var(--gray-600); margin-bottom: 6px;">비밀번호</label>
+                                <input type="text" id="newUserPw" placeholder="비밀번호"
+                                    style="width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 6px;">
+                            </div>
+                            <div>
+                                <label
+                                    style="display: block; font-size: 12px; font-weight: bold; color: var(--gray-600); margin-bottom: 6px;">사용자
+                                    이름(직급)</label>
+                                <input type="text" id="newUserName" placeholder="예: 홍길동 대리"
+                                    style="width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 6px;">
+                            </div>
+                            <button onclick="adminAddUser()" class="btn btn-primary" style="height: 40px;">계정
+                                추가</button>
+                        </div>
+
+                        <div style="overflow-x: auto;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>아이디</th>
+                                        <th>비밀번호</th>
+                                        <th>사용자 이름</th>
+                                        <th style="text-align: right;">관리</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminUsersTableBody">
+                                    <!-- JS Rendered -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </main>
     </div>
 
