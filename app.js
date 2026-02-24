@@ -132,8 +132,18 @@ async function loginDemo() {
 
 function handleAuthSuccess(userObj) {
     document.getElementById("loginScreen").style.display = "none";
-    document.querySelector(".user-name").textContent = userObj.name;
-    document.querySelector(".user-avatar").textContent = userObj.name.substring(0, 2).toUpperCase();
+    document.getElementById('app').style.display = 'flex';
+
+    // Fallback error-handling for missing DOM nodes
+    const userNameNode = document.querySelector(".user-name");
+    const userAvatarNode = document.querySelector(".user-avatar");
+
+    if (userNameNode) {
+        userNameNode.textContent = userObj.name;
+    }
+    if (userAvatarNode) {
+        userAvatarNode.textContent = userObj.name.substring(0, 2).toUpperCase();
+    }
 
     document.getElementById('sidebar-menu').innerHTML = `
         <div class="nav-item active" onclick="showScreen('dashboard', this)" id="menu-dashboard">
