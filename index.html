@@ -11,7 +11,7 @@
         rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=2.1">
 </head>
 
 <body>
@@ -97,7 +97,7 @@
                 <div class="page-subtitle" id="lastUpdated">마지막 업데이트: 연동 중...</div>
             </div>
 
-            <div style="display: flex; gap: 12px;">
+            <div style="display: flex; gap: 12px; align-items: center;">
                 <!-- 데이터 업로드 버튼 -->
                 <button class="btn btn-outline" onclick="document.getElementById('fileUpload').click()">
                     <i class="fas fa-file-excel"></i> 데이터 로드
@@ -709,7 +709,7 @@
             }, 3000);
         }
     </script>
+    <script src="app.js?v=2.2"></script>
 </body>
 
 </html>
-```
