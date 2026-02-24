@@ -156,9 +156,6 @@ function handleAuthSuccess(userObj) {
             <i class="fas fa-chevron-down" style="margin-left:auto; font-size:12px; transition: transform 0.2s;"></i>
         </div>
         <div class="submenu" id="submenu-inventory" style="display:none;">
-            <div class="nav-item sub-item" onclick="showScreen('inventory', this)" id="menu-inventory">
-                재고 현황
-            </div>
             <div class="nav-item sub-item" onclick="showScreen('stock', this)">
                 재고 관리
             </div>
