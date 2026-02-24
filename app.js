@@ -200,6 +200,69 @@ function logout() {
     }
 }
 
+window.showScreen = function (screenId, menuItemElement = null) {
+    // Hide all screens
+    document.querySelectorAll('.screen').forEach(el => el.style.display = 'none');
+
+    // Remove active class from all menu items
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+
+    // Show the target screen
+    const targetScreen = document.getElementById(`screen-${screenId}`);
+    if (targetScreen) targetScreen.style.display = 'block';
+
+    // Add active class to clicked menu item
+    if (menuItemElement) {
+        menuItemElement.classList.add('active');
+    }
+
+    // Update Page Title based on screenId
+    const pageTitle = document.getElementById('pageTitle');
+    if (pageTitle) {
+        if (screenId === 'dashboard') pageTitle.textContent = '대시보드';
+        else if (screenId === 'sales') pageTitle.textContent = '매출 관리';
+        else if (screenId === 'profit') pageTitle.textContent = '정산 현황';
+        else if (screenId === 'inventory') pageTitle.textContent = '재고 현황';
+        else if (screenId === 'stock') pageTitle.textContent = '재고 관리';
+        else if (screenId === 'productMaster') pageTitle.textContent = '제품 마스터';
+        else if (screenId === 'adminScreen') pageTitle.textContent = '계정 관리 (관리자)';
+        else pageTitle.textContent = 'RAWGAON SCM';
+    }
+
+    // specific renders...
+    const btnProductAdd = document.getElementById('btn-addProduct');
+    if (btnProductAdd) btnProductAdd.style.display = 'none';
+
+    if (screenId === 'productMaster') {
+        renderProductMasterTable();
+        if (btnProductAdd) btnProductAdd.style.display = 'inline-flex';
+    } else if (screenId === 'adminScreen') {
+        renderAdminUsers();
+    }
+};
+
+window.toggleSubmenu = function (submenuId, element) {
+    const submenu = document.getElementById(submenuId);
+    if (!submenu) return;
+    const icon = element.querySelector('.fa-chevron-down, .fa-chevron-up');
+
+    if (submenu.style.display === 'none') {
+        submenu.style.display = 'block';
+        if (icon) {
+            icon.classList.remove('fa-chevron-down');
+            icon.classList.add('fa-chevron-up');
+            icon.style.transform = 'rotate(180deg)';
+        }
+    } else {
+        submenu.style.display = 'none';
+        if (icon) {
+            icon.classList.remove('fa-chevron-up');
+            icon.classList.add('fa-chevron-down');
+            icon.style.transform = 'rotate(0deg)';
+        }
+    }
+};
+
 // ── 데이터 연동 (GAS) ──
 async function fetchData(action) {
     try {
