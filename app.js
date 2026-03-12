@@ -579,7 +579,8 @@ function renderProductMasterTable() {
 
         const getNum = (keys) => {
             let v = getV(keys);
-            return '-';
+            if (v === '-' || v === '' || v === undefined) return '-';
+            return fmt(safeNum(v));
         };
 
         let rowSku = getV(['상품코드', '자사SKU']);

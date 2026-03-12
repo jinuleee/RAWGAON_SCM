@@ -102,7 +102,7 @@
                 <button class="btn btn-outline" onclick="document.getElementById('fileUpload').click()">
                     <i class="fas fa-file-excel"></i> 데이터 로드
                 </button>
-                <input type="file" id="fileUpload" style="display: none;" accept=".xlsx,.xls,.csv" />
+                <input type="file" id="fileUpload" style="display: none;" accept=".xlsx,.xls,.csv" multiple />
 
                 <!-- 상품등록 버튼 (우측 상단 공통 버튼 영역) -->
                 <button class="btn btn-primary" onclick="openProductAddModal()" id="btn-addProduct"
@@ -398,7 +398,7 @@
             </div>
 
             <!-- 계정 관리 화면 (관리자 전용) -->
-            <div id="screen-adminScreen" class="screen content" style="display: none;">
+            <div id="screen-adminScreen" class="screen" style="display: none;">
                 <div class="card">
                     <div class="card-header" style="background: var(--primary-light);">
                         <h3 class="card-title" style="color: var(--primary-dark);"><i class="fas fa-user-shield"></i> 데모
@@ -460,64 +460,6 @@
                 </div>
             </div>
 
-            <!-- Admin Screen -->
-            <div id="screen-adminScreen" class="screen" style="display: none;">
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">로컬 시스템 관리자 관리</div>
-                        <span class="badge" style="background: var(--primary-light); color: var(--primary);">정적 웹 버전용 로컬
-                            계정</span>
-                    </div>
-                    <div class="card-body">
-                        <p style="color: var(--gray-500); margin-bottom: 24px;">이 버전의 SCM은 서버가 없으므로 로컬
-                            저장소(localStorage)에
-                            계정을 저장합니다. 브라우저 캐시 삭제 시 초기화되며, 영구적으로 계정을 추가하려면 <code>app.js</code> 내
-                            <code>VALID_USERS</code>를 배포 시 수정하세요.
-                        </p>
-
-                        <div
-                            style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 12px; margin-bottom: 24px; align-items: end;">
-                            <div>
-                                <label
-                                    style="font-size: 12px; color: var(--gray-500); margin-bottom: 4px; display: block;">아이디</label>
-                                <input type="text" id="newUserId" placeholder="예: user1"
-                                    style="width: 100%; padding: 8px 12px; border: 1px solid var(--gray-200); border-radius: 6px;">
-                            </div>
-                            <div>
-                                <label
-                                    style="font-size: 12px; color: var(--gray-500); margin-bottom: 4px; display: block;">비밀번호</label>
-                                <input type="text" id="newUserPw" placeholder="예: password123"
-                                    style="width: 100%; padding: 8px 12px; border: 1px solid var(--gray-200); border-radius: 6px;">
-                            </div>
-                            <div>
-                                <label
-                                    style="font-size: 12px; color: var(--gray-500); margin-bottom: 4px; display: block;">사용자
-                                    이름</label>
-                                <input type="text" id="newUserName" placeholder="예: 홍길동 대리"
-                                    style="width: 100%; padding: 8px 12px; border: 1px solid var(--gray-200); border-radius: 6px;">
-                            </div>
-                            <div>
-                                <button class="btn btn-primary" onclick="adminAddUser()" style="height: 35px;"><i
-                                        class="fas fa-user-plus"></i> 추가</button>
-                            </div>
-                        </div>
-
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>아이디</th>
-                                    <th>비밀번호 (평문)</th>
-                                    <th>사용자 이름</th>
-                                    <th style="text-align: right;">관리</th>
-                                </tr>
-                            </thead>
-                            <tbody id="adminUsersTableBody">
-                                <!-- JS Rendered -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
 
         </main>
     </div>
@@ -696,7 +638,6 @@
         </div>
     </div>
 
-    <script src="app.js"></script>
     <script>
         function showToast(msg) {
             const t = document.getElementById('toast');
@@ -709,7 +650,7 @@
             }, 3000);
         }
     </script>
-    <script src="app.js?v=2.2"></script>
+    <script src="app.js?v=2.3"></script>
 </body>
 
 </html>
